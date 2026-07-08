@@ -25,18 +25,12 @@ class DioClient {
 
   String getBaseUrl() {
     if (Platform.isAndroid) {
-      // Do not change the URL, comment it out if needed.
-      // return "http://172.16.2.21:5000/api/v1";
-      // return "http://192.168.1.7:5000/api/v1";
-      return "http://172.16.4.57:5001/api/v1";
-      // return "https://construction-app-taupe.vercel.app/api/v1";
+      return "http://10.82.130.35:5001/api/v1";
     }
     if (Platform.isIOS) {
-      // return "https://construction-app-taupe.vercel.app/api/v1";
-      return "http://172.16.4.57:5001/api/v1";
+      return "http://10.82.130.35:5001/api/v1";
     }
-    // return "https://construction-app-taupe.vercel.app/api/v1";
-    return "http://172.16.4.57:5001/api/v1";
+    return "http://10.82.130.35:5001/api/v1";
   }
 
   // 2. Configuration
