@@ -233,7 +233,7 @@ export const approveRejectPOSchema = z.object({
 });
 
 export const approvePOSchema = z.object({
-  approvalNotes: z.string().optional(),
+  approvalNotes: z.string().nullish(),
 });
 
 export const rejectPOSchema = z.object({

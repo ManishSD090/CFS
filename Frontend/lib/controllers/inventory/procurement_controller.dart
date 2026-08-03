@@ -303,10 +303,11 @@ class ProcurementController extends AsyncNotifier<ProcurementState> {
 
   /// Explicit Approve Endpoint
   Future<void> approvePO(String poId, {String? notes}) async {
-    final response =
-        await _dioClient.dio.post('$_poPath/approvals/$poId/approve', data: {
-      'approvalNotes': notes,
-    });
+    // Only include approvalNotes if non-null — Zod rejects explicit null for z.string().optional()
+    final data = <String, dynamic>{};
+    if (notes != null && notes.isNotEmpty) data['approvalNotes'] = notes;
+    final response = await _dioClient.dio
+        .post('$_poPath/approvals/$poId/approve', data: data);
     final updated = PurchaseOrder.fromJson(response.data['data']);
     _updateLocalPO(poId, (_) => updated);
     ref.invalidate(poDetailsProvider(poId));

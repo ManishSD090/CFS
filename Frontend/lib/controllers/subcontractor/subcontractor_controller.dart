@@ -15,6 +15,14 @@ final contractorProjectDetailsProvider =
   return controller.getContractorProjectById(id);
 });
 
+final projectSubContractorsProvider =
+    FutureProvider.family<List<ContractorProject>, (String, String)>((ref, arg) async {
+  final projectId = arg.$1;
+  final search = arg.$2;
+  final controller = ref.read(subcontractorControllerProvider.notifier);
+  return controller.getContractorProjectsByProjectId(projectId, search: search);
+});
+
 class SubcontractorController extends AsyncNotifier<SubcontractorState> {
   DioClient get _dioClient => ref.read(dioClientProvider);
   static const String _basePath = '/subcontractors';

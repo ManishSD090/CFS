@@ -19,18 +19,10 @@ class ProjectSubContractorsList extends ConsumerStatefulWidget {
 
 class _ProjectSubContractorsListState
     extends ConsumerState<ProjectSubContractorsList> {
-  late Future<List<ContractorProject>> _projectsFuture;
-
   bool _isSearchLoading = false;
   bool _isRefreshLoading = false;
   Timer? _debounce;
   String _searchQuery = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _projectsFuture = _fetchProjects();
-  }
 
   @override
   void dispose() {
@@ -38,44 +30,23 @@ class _ProjectSubContractorsListState
     super.dispose();
   }
 
-  Future<List<ContractorProject>> _fetchProjects({String search = ''}) {
-    return ref
-        .read(subcontractorControllerProvider.notifier)
-        .getContractorProjectsByProjectId(widget.projectId, search: search);
-  }
-
   Future<void> _refreshData({String? search, bool isSearch = false}) async {
     if (search != null) {
-      _searchQuery = search;
-    }
-
-    setState(() {
-      if (isSearch) {
-        _isSearchLoading = true;
-        _isRefreshLoading = false;
-      } else {
-        _isRefreshLoading = true;
-        _isSearchLoading = false;
-      }
-      _projectsFuture = _fetchProjects(search: _searchQuery);
-    });
-
-    try {
-      await _projectsFuture;
-    } catch (_) {
-      // Ignored here, FutureBuilder handles the UI display of the error
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSearchLoading = false;
-          _isRefreshLoading = false;
-        });
-      }
+      setState(() {
+        _searchQuery = search;
+      });
+    } else {
+      ref.invalidate(projectSubContractorsProvider((widget.projectId, _searchQuery)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final projectsAsync = ref.watch(projectSubContractorsProvider((widget.projectId, _searchQuery)));
+
+    _isSearchLoading = projectsAsync.isLoading && _searchQuery.isNotEmpty;
+    _isRefreshLoading = projectsAsync.isLoading && _searchQuery.isEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -100,30 +71,19 @@ class _ProjectSubContractorsListState
           const SizedBox(height: 15),
 
         // --- 3. List of Projects (Async) ---
-        FutureBuilder<List<ContractorProject>>(
-          future: _projectsFuture,
-          builder: (context, snapshot) {
-            // Show big spinner ONLY on initial load when there is no data
-            if (snapshot.connectionState == ConnectionState.waiting &&
-                !snapshot.hasData) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40.0),
-                child: Center(
-                    child: CircularProgressIndicator(
-                        color: AppColors.primaryBlue)),
-              );
-            }
-
-            if (snapshot.hasError &&
-                (snapshot.data == null || snapshot.data!.isEmpty)) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0),
-                child: _buildErrorState(snapshot.error!),
-              );
-            }
-
-            final projects = snapshot.data ?? [];
-
+        projectsAsync.when(
+          skipLoadingOnReload: true,
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40.0),
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.primaryBlue),
+            ),
+          ),
+          error: (err, stack) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0),
+            child: _buildErrorState(err),
+          ),
+          data: (projects) {
             if (projects.isEmpty) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20.0),

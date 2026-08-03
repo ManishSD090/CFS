@@ -28,7 +28,7 @@ class DioClient {
       return "http://10.82.130.35:5001/api/v1";
     }
     if (Platform.isIOS) {
-      return "http://10.82.130.35:5001/api/v1";
+      return "http://172.16.4.148:5001/api/v1";
     }
     return "http://10.82.130.35:5001/api/v1";
   }

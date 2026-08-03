@@ -652,6 +652,7 @@ class _AddSubContractorScreenState
 
       // Invalidate both the list and the details to ensure fresh data
       ref.invalidate(subcontractorControllerProvider);
+      ref.invalidate(projectSubContractorsProvider);
 
       if (mounted) {
         Navigator.pop(context);
