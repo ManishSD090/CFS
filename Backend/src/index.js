@@ -69,13 +69,19 @@ app.use(
 // Rate limiting
 const limiter = rateLimit({
   windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  max: Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 10000,
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.',
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting in development or when requests originate from local/LAN IP addresses during testing
+    if (process.env.NODE_ENV === 'development') return true;
+    const ip = req.ip || '';
+    return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip.includes('172.16.') || ip.includes('192.168.') || ip.includes('10.');
+  },
 });
 
 app.use(limiter);
@@ -225,6 +231,14 @@ const gracefulShutdown = async () => {
 process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
 
+// Handle nodemon restart gracefully
+process.once('SIGUSR2', async () => {
+  console.log('Shutting down for nodemon restart...');
+  await disconnectDatabase();
+  process.kill(process.pid, 'SIGUSR2');
+});
+
 startServer();
 
 export default app;
+

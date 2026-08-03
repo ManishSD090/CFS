@@ -34,19 +34,24 @@ class _UpdateCompanyScreenState extends ConsumerState<UpdateCompanyScreen> {
   void initState() {
     super.initState();
     // Initialize and Auto-fill data
-    // Note: Adjust the keys (['companyName'], etc.) to match your actual API response model
-    companyNameCtrl =
-        TextEditingController(text: widget.companyData['companyName'] ?? '');
-    addressCtrl =
-        TextEditingController(text: widget.companyData['officeAddress'] ?? '');
+    companyNameCtrl = TextEditingController(
+        text: widget.companyData['companyName']?.toString() ??
+            widget.companyData['name']?.toString() ??
+            '');
+    addressCtrl = TextEditingController(
+        text: widget.companyData['officeAddress']?.toString() ??
+            widget.companyData['address']?.toString() ??
+            '');
     regNoCtrl = TextEditingController(
-        text: widget.companyData['registrationNumber'] ?? '');
-    gstCtrl =
-        TextEditingController(text: widget.companyData['gstNumber'] ?? '');
-    emailCtrl = TextEditingController(text: widget.companyData['email'] ?? '');
-    websiteCtrl =
-        TextEditingController(text: widget.companyData['website'] ?? '');
-    phoneCtrl = TextEditingController(text: widget.companyData['phone'] ?? '');
+        text: widget.companyData['registrationNumber']?.toString() ?? '');
+    gstCtrl = TextEditingController(
+        text: widget.companyData['gstNumber']?.toString() ?? '');
+    emailCtrl = TextEditingController(
+        text: widget.companyData['email']?.toString() ?? '');
+    websiteCtrl = TextEditingController(
+        text: widget.companyData['website']?.toString() ?? '');
+    phoneCtrl = TextEditingController(
+        text: widget.companyData['phone']?.toString() ?? '');
   }
 
   @override
@@ -65,39 +70,72 @@ class _UpdateCompanyScreenState extends ConsumerState<UpdateCompanyScreen> {
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final id = widget.companyData['id'] ?? widget.companyData['_id'];
+    if (id == null || id.toString().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Error: Company ID is missing"),
+            backgroundColor: Colors.red),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     try {
-      // 1. Construct the Payload (Admin details removed)
+      // 1. Construct the Payload
       final Map<String, dynamic> updates = {
         'name': companyNameCtrl.text.trim(),
-        'registrationNumber': regNoCtrl.text.trim(),
-        'gstNumber': gstCtrl.text.trim(),
-        'officeAddress': addressCtrl.text.trim(),
-        'email': emailCtrl.text.trim(),
-        'website': websiteCtrl.text.trim(),
-        'phone': phoneCtrl.text.trim(),
+        if (regNoCtrl.text.trim().isNotEmpty)
+          'registrationNumber': regNoCtrl.text.trim()
+        else
+          'registrationNumber': null,
+        if (gstCtrl.text.trim().isNotEmpty)
+          'gstNumber': gstCtrl.text.trim()
+        else
+          'gstNumber': null,
+        if (addressCtrl.text.trim().isNotEmpty)
+          'officeAddress': addressCtrl.text.trim()
+        else
+          'officeAddress': null,
+        if (emailCtrl.text.trim().isNotEmpty)
+          'email': emailCtrl.text.trim()
+        else
+          'email': null,
+        if (websiteCtrl.text.trim().isNotEmpty)
+          'website': websiteCtrl.text.trim()
+        else
+          'website': null,
+        if (phoneCtrl.text.trim().isNotEmpty)
+          'phone': phoneCtrl.text.trim()
+        else
+          'phone': null,
       };
 
       // 2. Call Controller
-      // Assuming your controller has an updateCompany(id, payload) method
-      final id = widget.companyData['id'] ?? widget.companyData['_id'];
-
       await ref
           .read(superAdminControllerProvider.notifier)
-          .updateCompany(id: id, updates: updates);
+          .updateCompany(id: id.toString(), updates: updates);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Company updated successfully!")),
+          const SnackBar(
+              content: Text("Company updated successfully!"),
+              backgroundColor: Colors.green),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = e.toString();
+        try {
+          if ((e as dynamic).response?.data?['message'] != null) {
+            errorMessage = (e as dynamic).response.data['message'];
+          }
+        } catch (_) {}
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text("Error updating company: $e"),
+              content: Text("Error updating company: $errorMessage"),
               backgroundColor: Colors.red),
         );
       }
@@ -133,12 +171,12 @@ class _UpdateCompanyScreenState extends ConsumerState<UpdateCompanyScreen> {
                   required: true),
               Row(children: [
                 Expanded(
-                    child: _field("Registration number*", regNoCtrl, "Reg No",
-                        required: true)),
+                    child: _field("Registration number", regNoCtrl, "Reg No",
+                        required: false)),
                 const SizedBox(width: 12),
                 Expanded(
-                    child: _field("GST number*", gstCtrl, "GSTIN",
-                        required: true)),
+                    child: _field("GST number", gstCtrl, "GSTIN",
+                        required: false)),
               ]),
               _field("Email*", emailCtrl, "admin@company.com",
                   isEmail: true, required: true),

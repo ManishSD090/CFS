@@ -124,7 +124,14 @@ class SuperAdminController extends AsyncNotifier<CompanyState> {
   /// PATCH /super-admin/profile
   Future<void> updateSuperAdminProfile(Map<String, dynamic> payload) async {
     await _dioClient.dio.patch('$_basePathSuperAdmin/profile', data: payload);
-    ref.invalidate(authControllerProvider);
+    try {
+      final updatedUser = await ref
+          .read(authControllerProvider.notifier)
+          .fetchAndSyncProfile();
+      ref.read(authControllerProvider.notifier).updateLocalUser(updatedUser);
+    } catch (_) {
+      ref.invalidate(authControllerProvider);
+    }
   }
 
   /// POST /companies/create

@@ -149,7 +149,10 @@ class DashboardController extends AsyncNotifier<DashboardState> {
 
     return DashboardState(
       summary: quickActions != null
-          ? {'quickActions': quickActions}
+          ? {
+              'quickActions': quickActions,
+              'pendingInspections': adminDashboardRes.data['data']['pendingInspections']
+            }
           : null, // Wrap to match summary endpoint structure
       transactionTrends:
           trendsRes.data['success'] == true ? trendsRes.data['data'] : null,

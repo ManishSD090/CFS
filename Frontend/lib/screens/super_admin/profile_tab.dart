@@ -141,9 +141,22 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                     _buildInfoCard(
                       title: "Personal Info",
                       children: [
-                        _buildInfoRow("Email", user.email ?? "N/A"),
+                        _buildInfoRow(
+                            "Email",
+                            (user.email == null || user.email!.trim().isEmpty)
+                                ? "N/A"
+                                : user.email!),
                         _buildInfoRow("Password", "xxxxxxxx"),
-                        _buildInfoRow("Phone", user.phone),
+                        _buildInfoRow(
+                            "Phone",
+                            user.phone.startsWith('+91')
+                                ? user.phone
+                                : (user.phone
+                                            .replaceAll(RegExp(r'\D'), '')
+                                            .length ==
+                                        10
+                                    ? "+91 ${user.phone.replaceAll(RegExp(r'\D'), '')}"
+                                    : user.phone)),
                       ],
                     ),
 

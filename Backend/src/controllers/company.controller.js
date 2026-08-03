@@ -532,18 +532,19 @@ export const updateCompany = async (req, res) => {
       });
     }
 
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (registrationNumber !== undefined) updateData.registrationNumber = registrationNumber === '' ? null : registrationNumber;
+    if (gstNumber !== undefined) updateData.gstNumber = gstNumber === '' ? null : gstNumber;
+    if (officeAddress !== undefined) updateData.officeAddress = officeAddress;
+    if (phone !== undefined) updateData.phone = phone;
+    if (email !== undefined) updateData.email = email === '' ? null : email;
+    if (website !== undefined) updateData.website = website === '' ? null : website;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
     const updatedCompany = await prisma.company.update({
       where: { id },
-      data: {
-        name,
-        registrationNumber,
-        gstNumber,
-        officeAddress,
-        phone,
-        email,
-        website,
-        isActive,
-      },
+      data: updateData,
     });
 
     res.json({
@@ -555,16 +556,17 @@ export const updateCompany = async (req, res) => {
     console.error('Update company error:', error);
 
     if (error.code === 'P2002') {
+      const field = Array.isArray(error.meta?.target) ? error.meta.target.join(', ') : (error.meta?.target || 'unknown field');
       return res.status(409).json({
         success: false,
-        message: 'Duplicate value detected',
+        message: `Duplicate value detected for ${field}. This value is already in use by another company.`,
         field: error.meta?.target,
       });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: error.message || 'Internal server error',
     });
   }
 };

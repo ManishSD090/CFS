@@ -77,7 +77,7 @@ export const authenticate = async (req, res, next) => {
       });
     }
 
-    if (error.name === 'JsonWebTokenError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'NotBeforeError') {
       return res.status(401).json({
         success: false,
         message: 'Invalid token.',
@@ -85,7 +85,23 @@ export const authenticate = async (req, res, next) => {
     }
 
     console.error('Auth middleware error:', error);
-    return res.status(500).json({
+
+    // If it's a database connection timeout or Prisma connection error
+    if (
+      error?.message?.toLowerCase().includes('timeout') ||
+      error?.message?.toLowerCase().includes('connection') ||
+      error?.name?.includes('Prisma') ||
+      error?.code === 'P1001' ||
+      error?.code === 'P1002' ||
+      error?.code === 'P2024'
+    ) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection temporarily unavailable. Please retry.',
+      });
+    }
+
+    return res.status(401).json({
       success: false,
       message: 'Authentication failed.',
     });

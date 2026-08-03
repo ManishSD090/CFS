@@ -22,6 +22,7 @@ import 'package:construction_erp/screens/dpr/create_dpr_screen.dart';
 import 'package:construction_erp/screens/budget/transaction_history_screen.dart';
 import 'package:construction_erp/screens/budget/add_record_screen.dart';
 import 'package:construction_erp/screens/projects/project_inventory_dashboard.dart';
+import 'package:construction_erp/screens/budget/finance_tab.dart';
 
 // ✅ FIXED IMPORTS based on your exact folder structure
 import 'package:construction_erp/screens/payroll/payroll_details_screen.dart';
@@ -288,90 +289,10 @@ class _ProjectDetailsScreenState extends ConsumerState<ProjectDetailsScreen>
   }
 
   Widget _buildTransactionsTab() {
-    return Column(children: [
-      Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(8)),
-          child: const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Total Approved Budget: ₹1,80,00,000",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text("View Version",
-                    style: TextStyle(
-                        color: AppColors.primaryBlue,
-                        decoration: TextDecoration.underline,
-                        fontSize: 12))
-              ])),
-      const SizedBox(height: 20),
-      Row(children: [
-        Expanded(
-            flex: 5,
-            child: Column(children: [
-              _buildBudgetCard(
-                  "Total Expenses", "₹28,40,000", AppColors.alertRed),
-              const SizedBox(height: 12),
-              _buildBudgetCard(
-                  "Available Balance", "₹46,60,000", AppColors.primaryBlue)
-            ])),
-        Expanded(
-            flex: 6,
-            child: SizedBox(
-                height: 160,
-                child: PieChart(PieChartData(sections: [
-                  PieChartSectionData(
-                      color: AppColors.primaryBlue,
-                      value: 65,
-                      radius: 10,
-                      showTitle: false),
-                  PieChartSectionData(
-                      color: AppColors.alertRed,
-                      value: 15,
-                      radius: 10,
-                      showTitle: false),
-                  PieChartSectionData(
-                      color: const Color(0xFF00C4B4),
-                      value: 20,
-                      radius: 10,
-                      showTitle: false)
-                ]))))
-      ]),
-      const SizedBox(height: 16),
-      InkWell(
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => TransactionHistoryScreen(
-                      budgetId: project.id, projectId: project.id))),
-          child: const Text("View Transactions",
-              style: TextStyle(
-                  color: AppColors.primaryBlue,
-                  decoration: TextDecoration.underline))),
-      if (!_isHeaderVisible)
-        Padding(
-            padding: const EdgeInsets.only(top: 20),
-            child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                    onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => AddRecordScreen(
-                                budgetId: project.id,
-                                initialType: RecordType.expense))),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30)),
-                        padding: const EdgeInsets.symmetric(vertical: 16)),
-                    child: const Text("Create Request",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold)))))
-    ]);
+    return ProjectFinancialsTab(
+      project: project,
+      isHeaderVisible: _isHeaderVisible,
+    );
   }
 
   Widget _buildTimelineTab() {

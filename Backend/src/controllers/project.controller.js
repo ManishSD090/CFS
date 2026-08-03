@@ -287,6 +287,9 @@ export const getAllProjects = async (req, res) => {
               projectAssignments: true,
               expenses: true,
               materialRequests: true,
+              dprs: {
+                where: { status: 'TODO' }
+              }
             },
           },
         },
@@ -316,6 +319,7 @@ export const getAllProjects = async (req, res) => {
         teamMembers: project._count.projectAssignments,
         expenses: project._count.expenses,
         materialRequests: project._count.materialRequests,
+        pendingInspections: project._count.dprs,
       },
     }));
 

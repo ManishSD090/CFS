@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:construction_erp/routes.dart';
 import 'package:construction_erp/core/services/app_colors.dart';
 
+import 'package:construction_erp/models/user.dart';
+
 // State Management
 import 'package:construction_erp/controllers/auth/auth_controller.dart';
 import 'package:construction_erp/controllers/super_admin/super_admin_controller.dart';
@@ -24,6 +26,22 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
   final TextEditingController _phoneController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isInitialized = false;
+
+  void _initFields(User user) {
+    if (_isInitialized) return;
+    _isInitialized = true;
+
+    _nameController.text = user.name;
+    _emailController.text = user.email ?? '';
+
+    String phone = user.phone;
+    phone = phone.replaceAll(RegExp(r'\D'), '');
+    if (phone.startsWith('91') && phone.length == 12) {
+      phone = phone.substring(2);
+    }
+    _phoneController.text = phone;
+  }
 
   @override
   void initState() {
@@ -32,12 +50,8 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userState = ref.read(authControllerProvider);
       if (userState.hasValue && userState.value != null) {
-        final user = userState.value!;
         setState(() {
-          _nameController.text = user.name;
-          _emailController.text = user.email ?? '';
-          _phoneController.text =
-              user.phone; // Assuming model uses phoneNumber or phone
+          _initFields(userState.value!);
         });
       }
     });
@@ -56,15 +70,55 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
   // ---------------------------------------------------------------------------
 
   Future<void> _handleSave() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    String phone = _phoneController.text.trim();
+
+    if (name.isEmpty || name.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Name must be at least 2 characters"),
+          backgroundColor: AppColors.alertRed,
+        ),
+      );
+      return;
+    }
+
+    phone = phone.replaceAll(RegExp(r'\D'), '');
+    if (phone.startsWith('91') && phone.length == 12) {
+      phone = phone.substring(2);
+    }
+    if (phone.length != 10 || !RegExp(r'^[6-9]\d{9}$').hasMatch(phone)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter a valid 10-digit Indian phone number starting with 6-9"),
+          backgroundColor: AppColors.alertRed,
+        ),
+      );
+      return;
+    }
+
+    final Map<String, dynamic> payload = {
+      'name': name,
+      'phone': phone,
+    };
+
+    if (email.isNotEmpty) {
+      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Please enter a valid email address"),
+            backgroundColor: AppColors.alertRed,
+          ),
+        );
+        return;
+      }
+      payload['email'] = email;
+    }
+
     setState(() => _isLoading = true);
 
     try {
-      final payload = {
-        'name': _nameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'phone': _phoneController.text.trim(),
-      };
-
       await ref
           .read(superAdminControllerProvider.notifier)
           .updateSuperAdminProfile(payload);
@@ -76,6 +130,7 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
             backgroundColor: AppColors.successGreen,
           ),
         );
+        Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
@@ -105,8 +160,12 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch current user for the ID display
-    final currentUser = ref.watch(authControllerProvider).value;
+    // Watch current user for auto-fill and ID display
+    final authState = ref.watch(authControllerProvider);
+    final currentUser = authState.value;
+    if (currentUser != null && !_isInitialized) {
+      _initFields(currentUser);
+    }
     final userId = currentUser?.id ?? 'Unknown';
 
     return Scaffold(
@@ -265,12 +324,16 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
           backgroundColor: AppColors.white,
           selectedIndex: 2, // 'Profile' is selected
           onDestinationSelected: (index) {
-            // Since this is a standalone screen pushed on top of the layout,
-            // we typically pop back to the main layout to switch tabs.
             if (index != 2) {
-              Navigator.of(context).pop();
-              // Note: To switch tabs on the underlying screen, you might need
-              // to pass a callback or use a global provider for navigation index.
+              final tabArg = index == 0
+                  ? SuperAdminArguments.dashboard
+                  : SuperAdminArguments.companies;
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRoutes.superAdmin,
+                (route) => false,
+                arguments: SuperAdminArguments(tab: tabArg),
+              );
             }
           },
           height: 70,

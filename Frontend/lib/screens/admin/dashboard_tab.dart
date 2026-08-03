@@ -26,7 +26,7 @@ class DashboardTab extends ConsumerWidget {
     // Adjust the key (e.g., 'pendingInspections') based on your actual backend response.
     final dashboardState = dashboardAsync.valueOrNull;
     final pendingDprCount = int.tryParse(
-            dashboardState?.summary?['pendingInspections']?.toString() ?? '21') ??
+            dashboardState?.summary?['pendingInspections']?.toString() ?? '0') ??
         0;
 
     return Stack(
@@ -446,8 +446,8 @@ class DashboardTab extends ConsumerWidget {
 
   // ✅ Updated Reusable Widget for Floating DPR Inspection
   Widget _buildInspectionCard(BuildContext context, int count) {
-    // Hide completely if there are no pending reports
-    if (count <= 0) return const SizedBox.shrink();
+    // Show even if there are 0 pending reports
+    if (count < 0) return const SizedBox.shrink();
 
     return Padding(
       // Padding ensures it sits nicely above the bottom navigation bar and screen edges

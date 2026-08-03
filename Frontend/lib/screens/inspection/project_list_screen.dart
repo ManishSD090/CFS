@@ -59,7 +59,7 @@ class ProjectListScreen extends ConsumerWidget {
                                 const SizedBox(height: 4),
                                 Text("${project['location'] ?? 'Location'} | ID: ${project['projectId'] ?? ''}", style: const TextStyle(color: Colors.grey, fontSize: 12)),
                                 const SizedBox(height: 12),
-                                const Text("Tap to view pending inspections ➔", style: TextStyle(color: Color(0xFF0D6EFD), fontWeight: FontWeight.w600, fontSize: 13)),
+                                Text("${project['stats']?['pendingInspections'] ?? 0} pending inspections ➔", style: const TextStyle(color: Color(0xFF0D6EFD), fontWeight: FontWeight.w600, fontSize: 13)),
                               ],
                             ),
                           ),

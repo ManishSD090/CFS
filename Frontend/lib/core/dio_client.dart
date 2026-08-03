@@ -1,5 +1,4 @@
 import 'dart:async'; // Required for Completer
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
@@ -23,14 +22,23 @@ class DioClient {
     _configureDio();
   }
 
+  // NOTE:
+  // - For Android Emulator, use "10.0.2.2" (loopback address to host PC).
+  // - For Physical Android/iOS device via Wi-Fi, use your PC's LAN IP address (e.g. "10.128.90.113").
+  static const String serverHost = "10.0.2.2";
+
+  static String fixUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    return url
+        .replaceAll('localhost', serverHost)
+        .replaceAll('127.0.0.1', serverHost)
+        .replaceAll('172.16.9.36', serverHost)
+        .replaceAll('172.16.10.182', serverHost)
+        .replaceAll('192.168.1.10', serverHost);
+  }
+
   String getBaseUrl() {
-    if (Platform.isAndroid) {
-      return "http://172.16.21.251:5001/api/v1";
-    }
-    if (Platform.isIOS) {
-      return "http://172.16.4.148:5001/api/v1";
-    }
-    return "http://172.16.21.251:5001/api/v1";
+    return "http://$serverHost:5001/api/v1";
   }
 
   // 2. Configuration

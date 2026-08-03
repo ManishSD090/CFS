@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:construction_erp/core/services/app_colors.dart';
 import 'package:construction_erp/controllers/wpr/wpr_controller.dart';
+import 'package:construction_erp/core/dio_client.dart';
 import 'package:construction_erp/screens/dpr//dpr_tab.dart'; // Add this line!
 
 class CreateWPRScreen extends ConsumerStatefulWidget {
@@ -520,7 +521,7 @@ class _CreateWPRScreenState extends ConsumerState<CreateWPRScreen> {
         ]));
   }
 
-  String _fixUrl(String url) => url.replaceAll('localhost', '172.16.9.36');
+  String _fixUrl(String url) => DioClient.fixUrl(url);
 
   Widget _photoGrid() {
     final List photos = _previewData!['photos'] ?? [];

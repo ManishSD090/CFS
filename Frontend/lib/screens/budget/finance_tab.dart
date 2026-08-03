@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import 'package:dio/dio.dart'; // ✅ Added Dio import for error handling
+import 'package:dio/dio.dart';
 
 import 'package:construction_erp/models/project.dart';
 import 'package:construction_erp/models/budget.dart';
@@ -120,8 +120,8 @@ class ProjectFinancialsTab extends ConsumerWidget {
                 TextButton.icon(
                   onPressed: isReloading
                       ? null
-                      : () => ref
-                          .invalidate(projectBudgetsProvider(project.id)),
+                      : () =>
+                          ref.invalidate(projectBudgetsProvider(project.id)),
                   icon: isReloading
                       ? const SizedBox(
                           width: 14,
@@ -142,6 +142,9 @@ class ProjectFinancialsTab extends ConsumerWidget {
           (b) => b.isActive || b.status == BudgetStatus.active,
           orElse: () => budgets.first,
         );
+
+        final bool isApproved =
+            budget.isActive || budget.status == BudgetStatus.active;
 
         final double spentVal = budget.totalSpent;
         final double committedVal = budget.totalCommitted;
@@ -217,13 +220,28 @@ class ProjectFinancialsTab extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text(
-                                _formatCurrency(budget.totalApproved),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                              if (isApproved)
+                                Text(
+                                  _formatCurrency(budget.totalApproved),
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              else
+                                Text(
+                                  budget.status == BudgetStatus.rejected
+                                      ? "Rejected"
+                                      : "Pending Approval",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        budget.status == BudgetStatus.rejected
+                                            ? AppColors.alertRed
+                                            : Colors.orange.shade800,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),

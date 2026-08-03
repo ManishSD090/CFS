@@ -82,6 +82,10 @@ export const getAdminDashboard = async (req, res) => {
     ]);
 
     const dashboardData = {
+      pendingInspections:
+        approvalsStats.status === 'fulfilled'
+          ? approvalsStats.value.breakdown?.dprs || 0
+          : 0,
       quickActions: {
         transactions: {
           label: 'Transactions',

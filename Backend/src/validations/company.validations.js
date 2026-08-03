@@ -18,22 +18,35 @@ export const createCompanySchema = z.object({
   permissions: z.array(z.string()).optional().default([]),
 });
 
+// Helper for cleaning optional string fields
+const cleanString = (val) => {
+  if (val === undefined || val === null) return val;
+  if (typeof val === 'string' && val.trim() === '') return null;
+  return typeof val === 'string' ? val.trim() : val;
+};
+
+const cleanUrl = (val) => {
+  if (val === undefined || val === null) return val;
+  if (typeof val === 'string' && val.trim() === '') return null;
+  if (typeof val === 'string') {
+    let url = val.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    return url;
+  }
+  return val;
+};
+
 // Update company validation
 export const updateCompanySchema = z.object({
-  name: z
-    .string()
-    .min(2, 'Company name must be at least 2 characters')
-    .optional(),
-  registrationNumber: z.string().optional(),
-  gstNumber: z.string().optional(),
-  officeAddress: z
-    .string()
-    .min(2, 'Address must be at least 2 characters')
-    .optional()
-    .or(z.literal('')),
-  phone: z.string().min(10, 'Phone must be at least 10 digits').optional(),
-  email: z.string().email('Invalid email address').optional(),
-  website: z.string().optional().or(z.literal('')),
+  name: z.preprocess(cleanString, z.string().min(2, 'Company name must be at least 2 characters').optional().nullable()),
+  registrationNumber: z.preprocess(cleanString, z.string().optional().nullable()),
+  gstNumber: z.preprocess(cleanString, z.string().optional().nullable()),
+  officeAddress: z.preprocess(cleanString, z.string().min(3, 'Address must be at least 3 characters').optional().nullable()),
+  phone: z.preprocess(cleanString, z.string().min(10, 'Phone must be at least 10 digits').optional().nullable()),
+  email: z.preprocess(cleanString, z.string().email('Invalid email address').optional().nullable()),
+  website: z.preprocess(cleanUrl, z.string().url('Invalid website URL').optional().nullable()),
   isActive: z.boolean().optional(),
 });
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:construction_erp/core/services/app_colors.dart';
 import 'package:construction_erp/models/wpr.dart';
+import 'package:construction_erp/core/dio_client.dart';
 
 class WPRDetailsScreen extends StatelessWidget {
   final WeeklyProgressReport wpr;
@@ -184,7 +185,7 @@ class WPRDetailsScreen extends StatelessWidget {
       itemBuilder: (ctx, idx) => ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Image.network(
-          photos[idx]['url']?.replaceAll('localhost', '172.16.9.36') ?? '',
+          DioClient.fixUrl(photos[idx]['url']),
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.broken_image)),
         ),

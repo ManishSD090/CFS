@@ -16,9 +16,9 @@ if (!connectionString) {
 // Create connection pool
 const pool = new pg.Pool({
   connectionString,
-  max: 30,
+  max: process.env.NODE_ENV === 'production' ? 30 : 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS) || 30000,
 
   error: (err, client) => {
     console.error('PostgreSQL Pool Error:', err);
@@ -33,18 +33,25 @@ const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
 });
 
-// Connection test function
-export const testDatabaseConnection = async () => {
-  try {
-    await prisma.$connect();
-    // Simple query to verify connection
-    await prisma.$queryRaw`SELECT 1`;
-    console.log('✅ Database connection successful');
-    return true;
-  } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
-    return false;
+// Connection test function with retry for Neon/cloud databases
+export const testDatabaseConnection = async (retries = 3, delayMs = 3000) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await prisma.$connect();
+      // Simple query to verify connection
+      await prisma.$queryRaw`SELECT 1`;
+      console.log('✅ Database connection successful');
+      return true;
+    } catch (error) {
+      console.error(`❌ Database connection failed (Attempt ${attempt}/${retries}):`, error.message);
+      if (attempt < retries) {
+        console.log(`⏳ Retrying database connection in ${delayMs / 1000} seconds...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
   }
+  console.error('❌ Could not connect to database after maximum retries.');
+  return false;
 };
 
 // Graceful shutdown
@@ -59,3 +66,4 @@ export const disconnectDatabase = async () => {
 };
 
 export default prisma;
+
