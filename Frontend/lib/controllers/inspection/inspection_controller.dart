@@ -7,7 +7,7 @@ import 'package:construction_erp/models/dpr.dart';
 class WprData {
   final Map<String, dynamic> projectInfo;
   final Map<String, dynamic> weekInfo;
-  final Map<String, dynamic> weather;
+  final List<dynamic> weather;
   final String description;
   final Map<String, dynamic> attendance;
   final List<dynamic> subcontractors;
@@ -43,7 +43,7 @@ class WprData {
     return WprData(
       projectInfo: json['projectInfo'] ?? {},
       weekInfo: json['weekInfo'] ?? {},
-      weather: json['weather'] ?? {},
+      weather: json['weather'] ?? [],
       description: json['description'] ?? 'No description available',
       attendance: json['attendance'] ?? {},
       subcontractors: json['subcontractors'] ?? [],
