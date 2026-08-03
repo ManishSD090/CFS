@@ -79,9 +79,17 @@ class _UpdateProfileScreenState extends ConsumerState<UpdateProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = e.toString().replaceAll("Exception:", "").trim();
+        if (e.runtimeType.toString() == 'DioException') {
+          final dioError = e as dynamic;
+          if (dioError.response?.data != null && dioError.response?.data['message'] != null) {
+            errorMessage = dioError.response.data['message'];
+          }
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceAll("Exception:", "").trim()),
+            content: Text(errorMessage),
             backgroundColor: AppColors.alertRed,
           ),
         );

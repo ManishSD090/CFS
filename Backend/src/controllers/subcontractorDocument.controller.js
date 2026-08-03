@@ -8,48 +8,15 @@ import {
 } from '../services/fileStorage.service.js';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { checkUserPermission } from '../utils/permission.util.js';
+
 
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const checkSubcontractorPermission = async (
-  userId,
-  companyId,
-  permissionCode
-) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      role: {
-        include: {
-          rolePermissions: {
-            include: {
-              permission: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!user) return false;
-
-  // Super Admin has all permissions
-  if (user.userType === 'SUPER_ADMIN') return true;
-
-  // Check if user belongs to the company
-  if (user.companyId !== companyId) return false;
-
-  // Check for specific permission or special access permissions
-  const hasPermission = user.role?.rolePermissions.some(
-    (rp) =>
-      rp.permission.code === permissionCode ||
-      rp.permission.code === 'ALL_ACCESS' ||
-      rp.permission.code === 'FULL_COMPANY_ACCESS'
-  );
-
-  return hasPermission;
+const checkSubcontractorPermission = async (userId, companyId, permissionCode) => {
+  return await checkUserPermission(userId, companyId, permissionCode);
 };
 
 // Upload Contractor Document

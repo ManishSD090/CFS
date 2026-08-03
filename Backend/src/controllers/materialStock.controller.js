@@ -1,39 +1,10 @@
 import prisma from '../config/database.js';
+import { checkUserPermission } from '../utils/permission.util.js';
+
 
 // Helper function to check material permissions
 const checkMaterialPermission = async (userId, companyId, permissionCode) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      role: {
-        include: {
-          rolePermissions: {
-            include: {
-              permission: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!user) return false;
-
-  // Super Admin has all permissions
-  if (user.userType === 'SUPER_ADMIN') return true;
-
-  // Check if user belongs to the company
-  if (user.companyId !== companyId) return false;
-
-  // Check for specific permission or special access permissions
-  const hasPermission = user.role?.rolePermissions.some(
-    (rp) =>
-      rp.permission.code === permissionCode ||
-      rp.permission.code === 'ALL_ACCESS' ||
-      rp.permission.code === 'FULL_COMPANY_ACCESS'
-  );
-
-  return hasPermission;
+  return await checkUserPermission(userId, companyId, permissionCode);
 };
 
 // Check material stock before requesting

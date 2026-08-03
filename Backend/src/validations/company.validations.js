@@ -6,10 +6,10 @@ export const createCompanySchema = z.object({
   companyName: z.string().min(2, 'Company name must be at least 2 characters'),
   registrationNumber: z.string().optional(),
   gstNumber: z.string().optional(),
-  officeAddress: z.string().min(5, 'Address must be at least 5 characters'),
+  officeAddress: z.string().min(2, 'Address must be at least 2 characters').optional().or(z.literal('')),
   phone: z.string().min(10, 'Phone must be at least 10 digits'),
   email: z.string().email('Invalid email address'),
-  website: z.string().url('Invalid website URL').optional().or(z.literal('')),
+  website: z.string().optional().or(z.literal('')),
 
   adminName: z.string().min(2, 'Admin name must be at least 2 characters'),
   adminEmail: z.string().email('Invalid admin email address'),
@@ -28,11 +28,12 @@ export const updateCompanySchema = z.object({
   gstNumber: z.string().optional(),
   officeAddress: z
     .string()
-    .min(5, 'Address must be at least 5 characters')
-    .optional(),
+    .min(2, 'Address must be at least 2 characters')
+    .optional()
+    .or(z.literal('')),
   phone: z.string().min(10, 'Phone must be at least 10 digits').optional(),
   email: z.string().email('Invalid email address').optional(),
-  website: z.string().url('Invalid website URL').optional(),
+  website: z.string().optional().or(z.literal('')),
   isActive: z.boolean().optional(),
 });
 

@@ -1,40 +1,11 @@
 // src/controllers/project.controller.js
 import prisma from '../config/database.js';
+import { checkUserPermission } from '../utils/permission.util.js';
+
 
 // Helper function to check project permissions
 const checkProjectPermission = async (userId, companyId, permissionCode) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      role: {
-        include: {
-          rolePermissions: {
-            include: {
-              permission: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!user) return false;
-
-  // Super Admin has all permissions
-  if (user.userType === 'SUPER_ADMIN') return true;
-
-  // Check if user belongs to the company
-  if (user.companyId !== companyId) return false;
-
-  // Check for specific permission or special access permissions
-  const hasPermission = user.role?.rolePermissions.some(
-    (rp) =>
-      rp.permission.code === permissionCode ||
-      rp.permission.code === 'ALL_ACCESS' ||
-      rp.permission.code === 'FULL_COMPANY_ACCESS'
-  );
-
-  return hasPermission;
+  return await checkUserPermission(userId, companyId, permissionCode);
 };
 
 // Create Project
@@ -262,7 +233,7 @@ export const getAllProjects = async (req, res) => {
         },
       });
 
-      const hasAllProjectsAccess = user.role?.rolePermissions.some(
+      const hasAllProjectsAccess = user.role?.rolePermissions?.some(
         (rp) =>
           rp.permission.code === 'VIEW_ALL_PROJECTS' ||
           rp.permission.code === 'ALL_ACCESS' ||
@@ -493,7 +464,7 @@ export const getProjectById = async (req, res) => {
         },
       });
 
-      const hasAllProjectsAccess = user.role?.rolePermissions.some(
+      const hasAllProjectsAccess = user.role?.rolePermissions?.some(
         (rp) =>
           rp.permission.code === 'VIEW_ALL_PROJECTS' ||
           rp.permission.code === 'ALL_ACCESS' ||

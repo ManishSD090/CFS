@@ -45,11 +45,7 @@ export const login = async (req, res) => {
         company: true,
         role: {
           include: {
-            rolePermissions: {
-              include: {
-                permission: true,
-              },
-            },
+            rolePermissions: { include: { permission: true } },
           },
         },
       },
@@ -93,7 +89,7 @@ export const login = async (req, res) => {
 
     // Prepare permission codes list
     const permissions =
-      user.role?.rolePermissions.map((rp) => rp.permission.code) || [];
+      [...(user.role?.rolePermissions?.map((rp) => rp.permission.code) || []), ...(user.userPermissions?.map((up) => up.permission.code) || [])];
 
     // Prepare user data for response (sanitize)
     const userResponse = {
@@ -243,11 +239,7 @@ export const getProfile = async (req, res) => {
         company: true,
         role: {
           include: {
-            rolePermissions: {
-              include: {
-                permission: true,
-              },
-            },
+            rolePermissions: { include: { permission: true } },
           },
         },
         settings: true,
@@ -548,11 +540,7 @@ export const verifyOTPAndLogin = async (req, res) => {
         company: true,
         role: {
           include: {
-            rolePermissions: {
-              include: {
-                permission: true,
-              },
-            },
+            rolePermissions: { include: { permission: true } },
           },
         },
       },
@@ -579,7 +567,7 @@ export const verifyOTPAndLogin = async (req, res) => {
 
     // Prepare response
     const permissions =
-      user.role?.rolePermissions.map((rp) => rp.permission.code) || [];
+      [...(user.role?.rolePermissions?.map((rp) => rp.permission.code) || []), ...(user.userPermissions?.map((up) => up.permission.code) || [])];
 
     const userResponse = {
       id: user.id,

@@ -3,41 +3,15 @@ import prisma from '../config/database.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { checkUserPermission } from '../utils/permission.util.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Helper function to check supplier permissions
 const checkSupplierPermission = async (userId, companyId, permissionCode) => {
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: {
-            role: {
-                include: {
-                    rolePermissions: {
-                        include: {
-                            permission: true,
-                        },
-                    },
-                },
-            },
-        },
-    });
-
-    if (!user) return false;
-    if (user.userType === 'SUPER_ADMIN') return true;
-    if (user.companyId !== companyId) return false;
-
-    const hasPermission = user.role?.rolePermissions.some(
-        (rp) =>
-            rp.permission.code === permissionCode ||
-            rp.permission.code === 'ALL_ACCESS' ||
-            rp.permission.code === 'FULL_COMPANY_ACCESS' ||
-            rp.permission.code === 'SUPPLIER_ALL_ACCESS' ||
-            rp.permission.code === 'SUPPLIER_DOCUMENT_ALL_ACCESS'
-    );
-
-    return hasPermission;
+  return await checkUserPermission(userId, companyId, permissionCode);
 };
 
 // Helper to log audit

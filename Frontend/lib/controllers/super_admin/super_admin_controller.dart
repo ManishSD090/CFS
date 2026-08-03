@@ -129,33 +129,55 @@ class SuperAdminController extends AsyncNotifier<CompanyState> {
 
   /// POST /companies/create
   Future<void> createCompany(Map<String, dynamic> payload) async {
+    final previousState = state;
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    try {
       await _dioClient.dio.post('$_basePathCompanies/create', data: payload);
-      return _fetchPage(page: 1, isRefresh: true);
-    });
+      state = await AsyncValue.guard(() => _fetchPage(page: 1, isRefresh: true));
+    } catch (e, st) {
+      if (previousState.hasValue) {
+        state = previousState;
+      } else {
+        state = AsyncValue.error(e, st);
+      }
+      rethrow;
+    }
   }
 
   /// PUT /companies/:id
   Future<void> updateCompany(
       {required String id, required Map<String, dynamic> updates}) async {
+    final previousState = state;
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    try {
       await _dioClient.dio.put('$_basePathCompanies/$id', data: updates);
-      return _fetchPage(page: 1, isRefresh: true);
-    });
+      state = await AsyncValue.guard(() => _fetchPage(page: 1, isRefresh: true));
+    } catch (e, st) {
+      if (previousState.hasValue) {
+        state = previousState;
+      } else {
+        state = AsyncValue.error(e, st);
+      }
+      rethrow;
+    }
   }
 
   /// PATCH /companies/:id/status
   Future<void> toggleCompanyStatus(
       {required String id, required bool isActive}) async {
+    final previousState = state;
     try {
       await _dioClient.dio.patch('$_basePathCompanies/$id/status',
           data: {'isActive': isActive});
       final updatedState = await _fetchPage(page: 1, isRefresh: true);
       state = AsyncValue.data(updatedState);
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      if (previousState.hasValue) {
+        state = previousState;
+      } else {
+        state = AsyncValue.error(e, st);
+      }
+      rethrow;
     }
   }
 
@@ -234,5 +256,17 @@ class SuperAdminController extends AsyncNotifier<CompanyState> {
     final response = await _dioClient.dio
         .get('$_basePathSuperAdmin/dashboard/recent-activities');
     return response.data['data'];
+  }
+
+  /// GET /super-admin/dashboard/recent-activities (Paginated)
+  Future<Map<String, dynamic>> getPaginatedRecentActivities({int page = 1, int limit = 10}) async {
+    final response = await _dioClient.dio.get(
+      '$_basePathSuperAdmin/dashboard/recent-activities',
+      queryParameters: {
+        'page': page,
+        'limit': limit,
+      },
+    );
+    return response.data; // Includes both 'data' and 'pagination' keys
   }
 }
