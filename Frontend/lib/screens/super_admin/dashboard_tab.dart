@@ -5,6 +5,7 @@ import 'package:construction_erp/widgets/super_admin/admin_stat_card.dart';
 import 'package:construction_erp/widgets/super_admin/system_alert_card.dart';
 import 'package:construction_erp/controllers/auth/auth_controller.dart';
 import 'package:construction_erp/controllers/super_admin/super_admin_controller.dart';
+import 'package:construction_erp/widgets/super_admin/activities_dialog.dart';
 
 class DashboardTab extends ConsumerWidget {
   const DashboardTab({super.key});
@@ -121,7 +122,10 @@ class DashboardTab extends ConsumerWidget {
                             .map((a) => a['description'] as String)
                             .toList(),
                         onViewAll: () {
-                          // Navigate to detailed activity log
+                          showDialog(
+                            context: context,
+                            builder: (context) => const ActivitiesDialog(),
+                          );
                         },
                       ),
                       const SizedBox(height: 20),

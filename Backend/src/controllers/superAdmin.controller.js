@@ -60,7 +60,7 @@ const getRecentActivitiesData = async () => {
       ...companiesWithProjects.map((c) => c.companyId),
       ...companiesWithUsers.map((u) => u.companyId),
     ]),
-  ];
+  ].filter(id => id !== null);
 
   const inactiveCompanies = await prisma.company.findMany({
     where: {
@@ -82,7 +82,7 @@ const getRecentActivitiesData = async () => {
   recentCompanies.forEach((company) => {
     const daysAgo = Math.floor(
       (Date.now() - new Date(company.createdAt).getTime()) /
-        (1000 * 60 * 60 * 24)
+      (1000 * 60 * 60 * 24)
     );
     activities.push({
       id: `new-company-${company.id}`,
@@ -102,7 +102,7 @@ const getRecentActivitiesData = async () => {
   suspendedCompanies.forEach((company) => {
     const daysAgo = Math.floor(
       (Date.now() - new Date(company.updatedAt).getTime()) /
-        (1000 * 60 * 60 * 24)
+      (1000 * 60 * 60 * 24)
     );
     activities.push({
       id: `suspended-company-${company.id}`,
@@ -122,7 +122,7 @@ const getRecentActivitiesData = async () => {
   inactiveCompanies.forEach((company) => {
     const daysInactive = Math.floor(
       (Date.now() - new Date(company.updatedAt).getTime()) /
-        (1000 * 60 * 60 * 24)
+      (1000 * 60 * 60 * 24)
     );
     activities.push({
       id: `inactive-company-${company.id}`,
@@ -256,10 +256,16 @@ export const updateSuperAdminProfile = async (req, res) => {
     console.error('Update Super Admin Profile Error:', error);
 
     // Prisma unique constraint (email / phone)
-    if (error.code === 'P2002') {
+    console.dir(error, { depth: null });
+    if (error.code === "P2002") {
+      const fields =
+        error.meta?.target ||
+        error.meta?.driverAdapterError?.cause?.constraint?.fields ||
+        ["unknown"];
+
       return res.status(409).json({
         success: false,
-        message: `Duplicate value for field: ${error.meta.target.join(', ')}`,
+        message: `Duplicate value for field: ${fields.join(", ")}`,
       });
     }
 
@@ -324,11 +330,15 @@ export const getDashboardStats = async (req, res) => {
 
 export const getRecentActivities = async (req, res) => {
   try {
-    // Get recent company creations (last 30 days)
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const take = parseInt(limit);
+
+    // Get recent company creations (last 90 days)
     const recentCompanies = await prisma.company.findMany({
       where: {
         createdAt: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+          gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // Last 90 days
         },
       },
       select: {
@@ -344,7 +354,6 @@ export const getRecentActivities = async (req, res) => {
       orderBy: {
         createdAt: 'desc',
       },
-      take: 5,
     });
 
     // Get recently suspended companies
@@ -352,7 +361,7 @@ export const getRecentActivities = async (req, res) => {
       where: {
         isActive: false,
         updatedAt: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
         },
       },
       select: {
@@ -363,29 +372,21 @@ export const getRecentActivities = async (req, res) => {
       orderBy: {
         updatedAt: 'desc',
       },
-      take: 5,
     });
 
     // Get inactive companies (no activity for 15+ days)
     const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
 
-    // Get companies with no recent activity
     const companiesWithProjects = await prisma.project.groupBy({
       by: ['companyId'],
-      where: {
-        updatedAt: {
-          gte: fifteenDaysAgo,
-        },
-      },
+      where: { updatedAt: { gte: fifteenDaysAgo } },
     });
 
     const companiesWithUsers = await prisma.user.groupBy({
       by: ['companyId'],
       where: {
         userType: 'COMPANY_ADMIN',
-        lastLogin: {
-          gte: fifteenDaysAgo,
-        },
+        lastLogin: { gte: fifteenDaysAgo },
       },
     });
 
@@ -394,109 +395,152 @@ export const getRecentActivities = async (req, res) => {
         ...companiesWithProjects.map((c) => c.companyId),
         ...companiesWithUsers.map((u) => u.companyId),
       ]),
-    ];
+    ].filter(id => id !== null);
 
     const inactiveCompanies = await prisma.company.findMany({
       where: {
         isActive: true,
-        id: {
-          notIn: activeCompanyIds,
-        },
+        id: { notIn: activeCompanyIds },
       },
       select: {
         id: true,
         name: true,
         updatedAt: true,
       },
-      orderBy: {
-        updatedAt: 'asc',
-      },
-      take: 5,
+      orderBy: { updatedAt: 'asc' },
     });
+
+    // Get recently edited companies
+    const updatedCompanies = await prisma.company.findMany({
+      where: {
+        isActive: true,
+        updatedAt: {
+          gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    });
+    
+    // Filter out creations
+    const editedCompanies = updatedCompanies.filter(c => c.updatedAt.getTime() > c.createdAt.getTime() + 1000);
+
+    // Get recent admin updates
+    const updatedAdmins = await prisma.user.findMany({
+      where: {
+        userType: 'COMPANY_ADMIN',
+        updatedAt: {
+          gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+        company: {
+          select: { name: true }
+        }
+      }
+    });
+
+    const adminUpdates = updatedAdmins.filter(u => u.updatedAt.getTime() > u.createdAt.getTime() + 1000);
 
     // Format activities
     const activities = [];
 
+    const getTimeText = (timestamp) => {
+      const daysAgo = Math.floor(
+        (Date.now() - new Date(timestamp).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      if (daysAgo === 0) return 'today';
+      if (daysAgo === 1) return 'yesterday';
+      return `${daysAgo} days ago`;
+    };
+
     // Add new company activities
     recentCompanies.forEach((company) => {
-      const daysAgo = Math.floor(
-        (Date.now() - new Date(company.createdAt).getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
-      let timeText;
-
-      if (daysAgo === 0) {
-        timeText = 'today';
-      } else if (daysAgo === 1) {
-        timeText = 'yesterday';
-      } else {
-        timeText = `${daysAgo} days ago`;
-      }
-
       activities.push({
         id: `new-company-${company.id}`,
         type: 'company_created',
         title: 'New Company Created',
         description: `${company.name} registered successfully`,
         timestamp: company.createdAt,
-        timeText: timeText,
+        timeText: getTimeText(company.createdAt),
       });
     });
 
     // Add suspended company activities
     suspendedCompanies.forEach((company) => {
-      const daysAgo = Math.floor(
-        (Date.now() - new Date(company.updatedAt).getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
-      let timeText;
-
-      if (daysAgo === 0) {
-        timeText = 'today';
-      } else if (daysAgo === 1) {
-        timeText = 'yesterday';
-      } else {
-        timeText = `${daysAgo} days ago`;
-      }
-
       activities.push({
         id: `suspended-company-${company.id}`,
         type: 'company_suspended',
         title: 'Company Suspended',
         description: `${company.name} suspended due to policy violation`,
         timestamp: company.updatedAt,
-        timeText: timeText,
+        timeText: getTimeText(company.updatedAt),
       });
     });
 
     // Add inactive company warnings
     inactiveCompanies.forEach((company) => {
-      const daysInactive = Math.floor(
-        (Date.now() - new Date(company.updatedAt).getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
-
       activities.push({
         id: `inactive-company-${company.id}`,
         type: 'inactive_warning',
         title: 'Inactive Company Warning',
-        description: `${company.name} has shown no activity for ${daysInactive} days`,
+        description: `${company.name} has shown no activity for ${Math.floor((Date.now() - new Date(company.updatedAt).getTime()) / (1000 * 60 * 60 * 24))} days`,
         timestamp: company.updatedAt,
-        timeText: `${daysInactive}d ago`,
+        timeText: getTimeText(company.updatedAt),
       });
     });
 
-    // Sort activities by timestamp (most recent first) and limit to 10
+    // Add edited companies
+    editedCompanies.forEach((company) => {
+      activities.push({
+        id: `edited-company-${company.id}`,
+        type: 'company_edited',
+        title: 'Company Edited',
+        description: `${company.name} profile was updated`,
+        timestamp: company.updatedAt,
+        timeText: getTimeText(company.updatedAt),
+      });
+    });
+
+    // Add admin updates
+    adminUpdates.forEach((admin) => {
+      activities.push({
+        id: `admin-update-${admin.id}`,
+        type: 'admin_updated',
+        title: 'Admin Profile Updated',
+        description: `Admin ${admin.name} from ${admin.company?.name || 'Unknown'} was updated`,
+        timestamp: admin.updatedAt,
+        timeText: getTimeText(admin.updatedAt),
+      });
+    });
+
+    // Sort activities by timestamp (most recent first)
     const sortedActivities = activities
       .sort(
         (a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      )
-      .slice(0, 10);
+      );
+
+    const total = sortedActivities.length;
+    const paginatedActivities = sortedActivities.slice(skip, skip + take);
 
     return res.status(200).json({
       success: true,
-      data: sortedActivities,
+      data: paginatedActivities,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / parseInt(limit))
+      }
     });
   } catch (error) {
     console.error('Get Recent Activities Error:', error);

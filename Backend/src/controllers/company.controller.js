@@ -151,13 +151,13 @@ export const createCompanyWithAdmin = async (req, res) => {
         }
 
         // 5. Assign permissions to role
-        for (const permission of permissionsToAssign) {
-          await tx.rolePermission.create({
-            data: {
+        if (permissionsToAssign.length > 0) {
+          await tx.rolePermission.createMany({
+            data: permissionsToAssign.map((permission) => ({
               roleId: companyAdminRole.id,
               permissionId: permission.id,
               grantedById: req.user.userId,
-            },
+            })),
           });
         }
 
