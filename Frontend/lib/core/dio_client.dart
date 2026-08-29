@@ -1,5 +1,4 @@
 import 'dart:async'; // Required for Completer
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
@@ -23,14 +22,13 @@ class DioClient {
     _configureDio();
   }
 
+  /// The deployed backend server root (no trailing slash, no /api/v1).
+  /// Use this when constructing media/upload URLs from relative paths
+  /// returned by the backend (e.g. "/uploads/file.jpg").
+  static const String serverBaseUrl = 'https://cfs-backend-tisy.onrender.com';
+
   String getBaseUrl() {
-    if (Platform.isAndroid) {
-      return "http://172.16.21.251:5001/api/v1";
-    }
-    if (Platform.isIOS) {
-      return "http://172.16.4.148:5001/api/v1";
-    }
-    return "http://172.16.21.251:5001/api/v1";
+    return '$serverBaseUrl/api/v1';
   }
 
   // 2. Configuration

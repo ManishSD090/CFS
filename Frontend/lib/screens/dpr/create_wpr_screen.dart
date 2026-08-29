@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:construction_erp/core/services/app_colors.dart';
 import 'package:construction_erp/controllers/wpr/wpr_controller.dart';
 import 'package:construction_erp/screens/dpr//dpr_tab.dart'; // Add this line!
+import 'package:construction_erp/core/dio_client.dart';
 
 class CreateWPRScreen extends ConsumerStatefulWidget {
   final ScrollController scrollController;
@@ -520,7 +521,13 @@ class _CreateWPRScreenState extends ConsumerState<CreateWPRScreen> {
         ]));
   }
 
-  String _fixUrl(String url) => url.replaceAll('localhost', '172.16.9.36');
+  // Converts a relative path returned by the backend (e.g. "/uploads/file.jpg")
+  // into an absolute URL using the centralized server base URL.
+  String _fixUrl(String url) {
+    if (url.isEmpty) return '';
+    if (url.startsWith('/')) return '${DioClient.serverBaseUrl}$url';
+    return url;
+  }
 
   Widget _photoGrid() {
     final List photos = _previewData!['photos'] ?? [];
@@ -644,7 +651,7 @@ class _RowInfo extends StatelessWidget {
   final Color? valueColor;
   final bool isBold;
   const _RowInfo(
-      {required this.label, required this.value, this.valueColor, this.isBold = false});
+      {required this.label, required this.value, this.valueColor});
   @override
   Widget build(BuildContext context) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),

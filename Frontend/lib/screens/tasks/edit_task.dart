@@ -9,6 +9,7 @@ import 'package:construction_erp/models/task.dart';
 import 'package:construction_erp/models/enums.dart';
 import 'package:construction_erp/controllers/task/task_controller.dart';
 import 'package:construction_erp/controllers/project/project_controller.dart';
+import 'package:construction_erp/core/dio_client.dart';
 
 class EditTaskScreen extends ConsumerStatefulWidget {
   final String taskId;
@@ -963,15 +964,10 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
   }
 
   Widget _buildPhotoThumbnail(TaskAttachment attachment) {
-    // FIX: Android emulator needs 10.0.2.2 instead of localhost
-    // This is safely wrapped to only execute during local development on Android.
+    // If the backend returns a relative path, resolve it against the server root.
     String imageUrl = attachment.fileUrl;
-    if (kDebugMode &&
-        !kIsWeb &&
-        Platform.isAndroid &&
-        imageUrl.contains('localhost')) {
-      // imageUrl = imageUrl.replaceAll('localhost', '10.0.2.2');
-      imageUrl = imageUrl.replaceAll('localhost', '192.168.1.10');
+    if (imageUrl.startsWith('/')) {
+      imageUrl = '${DioClient.serverBaseUrl}$imageUrl';
     }
 
     return GestureDetector(

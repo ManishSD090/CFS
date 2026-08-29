@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:construction_erp/core/services/app_colors.dart';
 import 'package:construction_erp/models/wpr.dart';
+import 'package:construction_erp/core/dio_client.dart';
 
 class WPRDetailsScreen extends StatelessWidget {
   final WeeklyProgressReport wpr;
@@ -173,6 +174,14 @@ class WPRDetailsScreen extends StatelessWidget {
     );
   }
 
+  // Converts a relative path returned by the backend (e.g. "/uploads/file.jpg")
+  // into an absolute URL using the centralized server base URL.
+  String _fixUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('/')) return '${DioClient.serverBaseUrl}$url';
+    return url;
+  }
+
   Widget _buildPhotoGrid(List photos) {
     return GridView.builder(
       shrinkWrap: true,
@@ -184,7 +193,7 @@ class WPRDetailsScreen extends StatelessWidget {
       itemBuilder: (ctx, idx) => ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Image.network(
-          photos[idx]['url']?.replaceAll('localhost', '172.16.9.36') ?? '',
+          _fixUrl(photos[idx]['url']?.toString()),
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.broken_image)),
         ),

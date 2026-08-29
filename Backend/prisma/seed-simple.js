@@ -51,30 +51,53 @@ async function seedSuperAdmin() {
       );
     }
 
-    // 5. Check if Super Admin User already exists
-    const existingSuperAdmin = await prisma.user.findFirst({
-      where: {
-        userType: 'SUPER_ADMIN',
-      },
+    // Read credentials from environment variables
+    const adminEmail = process.env.SUPER_ADMIN_EMAIL;
+    const adminPassword = process.env.SUPER_ADMIN_PASSWORD;
+    const adminName = process.env.SUPER_ADMIN_NAME || 'Super Administrator';
+    const adminPhone = process.env.SUPER_ADMIN_PHONE || '8779032050';
+
+    if (!adminEmail || !adminPassword) {
+      console.error('❌ Error: SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD environment variables are required.');
+      process.exit(1);
+    }
+
+    // 5. Check if Super Admin User already exists by email
+    let existingSuperAdmin = await prisma.user.findUnique({
+      where: { email: adminEmail },
     });
 
+    if (!existingSuperAdmin) {
+       // Also check if ANY super admin exists to avoid creating multiple if email changed
+       existingSuperAdmin = await prisma.user.findFirst({
+         where: { userType: 'SUPER_ADMIN' }
+       });
+    }
+
     if (existingSuperAdmin) {
-      console.log('Super Admin user already exists');
-      console.log(`Phone: ${existingSuperAdmin.phone}`);
-      console.log(`Email: ${existingSuperAdmin.email}`);
+      console.log('✅ Super Admin user already exists. Skipping creation.');
+      
+      // Ensure the role is correctly assigned even if user existed
+      if (existingSuperAdmin.roleId !== superAdminRole.id) {
+         await prisma.user.update({
+            where: { id: existingSuperAdmin.id },
+            data: { roleId: superAdminRole.id }
+         });
+         console.log('✅ Super Admin role updated.');
+      }
       return;
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash('Admin@123', 10);
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
-    // In the super admin creation section, update:
+    // Create the super admin
     const superAdmin = await prisma.user.create({
       data: {
-        phone: '8779032050',
-        email: 'superadmin@gmail.com',
+        phone: adminPhone,
+        email: adminEmail,
         password: hashedPassword,
-        name: 'Super Administrator',
+        name: adminName,
         userType: 'SUPER_ADMIN',
         employeeId: 'SA001',
         designation: 'System Administrator',
@@ -91,10 +114,7 @@ async function seedSuperAdmin() {
       },
     });
 
-    console.log('✅ Super Admin created successfully:');
-    console.log(`Phone: ${superAdmin.phone}`);
-    console.log(`Email: ${superAdmin.email}`);
-    console.log('Password: Admin@123');
+    console.log('✅ Super Admin seed completed successfully.');
   } catch (error) {
     console.error('Error seeding Super Admin:', error);
     process.exit(1);

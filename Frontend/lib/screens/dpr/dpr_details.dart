@@ -6,6 +6,7 @@ import 'package:construction_erp/core/services/app_colors.dart';
 import 'package:construction_erp/models/dpr.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:construction_erp/controllers/dpr/dpr_controller.dart';
+import 'package:construction_erp/core/dio_client.dart';
 
 class DPRDetailsScreen extends ConsumerWidget {
   final DailyProgressReport dpr;
@@ -358,13 +359,12 @@ class DPRDetailsScreen extends ConsumerWidget {
     );
   }
 
+  /// Converts a relative path returned by the backend (e.g. "/uploads/file.jpg")
+  /// into an absolute URL using the centralized server base URL.
   String _fixUrl(String? url) {
-    if (url == null || url.isEmpty) return "";
-    String fixed = url;
-    if (fixed.contains('localhost')) {
-      fixed = fixed.replaceAll('localhost', '172.16.9.36'); 
-    }
-    return fixed;
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('/')) return '${DioClient.serverBaseUrl}$url';
+    return url;
   }
 
   Widget _photosSection(BuildContext context) {

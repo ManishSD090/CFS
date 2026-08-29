@@ -11,6 +11,7 @@ import 'package:construction_erp/controllers/dpr/dpr_controller.dart';
 import 'package:construction_erp/models/task.dart';
 import 'package:construction_erp/controllers/core_providers.dart';
 import 'package:construction_erp/controllers/task/task_controller.dart';
+import 'package:construction_erp/core/dio_client.dart';
 
 // --- DATA PROVIDER FOR TASKS ---
 final tasksProvider = FutureProvider.family<List<Task>, String?>((ref, projectId) async {
@@ -568,12 +569,11 @@ class _EditDPRScreenState extends ConsumerState<EditDPRScreen> {
     );
   }
 
-  // Apply _fixUrl to properly load images on device if localhost is accidentally retrieved
+  // Converts a relative path returned by the backend (e.g. "/uploads/file.jpg")
+  // into an absolute URL using the centralized server base URL.
   String _fixUrl(String? url) {
-    if (url == null || url.isEmpty) return "";
-    if (url.contains('localhost')) {
-      return url.replaceAll('localhost', '172.16.9.36'); 
-    }
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('/')) return '${DioClient.serverBaseUrl}$url';
     return url;
   }
 
