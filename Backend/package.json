@@ -15,6 +15,7 @@
     "prisma:migrate": "prisma migrate dev",
     "seed": "node prisma/seed.js",
     "seed:permissions": "node prisma/seed-permissions.js",
+    "baseline:prod": "node prisma/baseline-and-seed.js",
     "db:setup": "npm run prisma:generate && npm run prisma:migrate && npm run seed",
     "vercel-build": "npm run prisma:generate && npm run prisma:migrate:deploy"
   },
