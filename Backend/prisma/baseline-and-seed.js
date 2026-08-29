@@ -45,6 +45,8 @@ async function runBaseline() {
   }
 
   console.log('✅ Baseline and Super Admin seed completed successfully!');
+  console.log('🚀 Starting application server...');
+  execSync('npm start', { stdio: 'inherit' });
 }
 
 runBaseline().catch((err) => {
