@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { isAuthenticated } from "./modules/admin/services/authStorage";
 
@@ -70,7 +69,6 @@ import PayrollSettingsPage from "./modules/admin/pages/projects/payroll/PayrollS
 
 import LoginPage from "./modules/auth/pages/Login";
 import SetupAccount from "./modules/auth/pages/SetupAccount";
-import ForgotPassword from "./modules/auth/pages/ForgotPassword";
 
 // ProtectedRoute: evaluated fresh on every render/navigation,
 // so it correctly sees the token saved during login.
@@ -86,7 +84,6 @@ function App() {
       <Routes>
 
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* ACCOUNT SETUP - First-time login users with a valid OTP token */}
         <Route
@@ -136,7 +133,7 @@ function App() {
           <Route path="projects/:id/timeline/create" element={<CreateTimelinePage />} />
           <Route path="projects/:id/timeline/edit" element={<EditTimelinePage />} />
           <Route path="projects/:id/timeline/versions/create" element={<CreateTimelineVersionPage />} />
-          
+
           <Route path="projects/:id/budget/create" element={<CreateBudgetPage />} />
           <Route path="projects/:id/budget/edit" element={<EditBudgetPage />} />
           <Route path="projects/:id/budget/revisions" element={<BudgetRevisionsPage />} />
